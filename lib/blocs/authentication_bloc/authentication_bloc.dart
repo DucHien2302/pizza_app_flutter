@@ -10,11 +10,10 @@ part 'authentication_state.dart';
 class AuthenticationBloc
     extends Bloc<AuthenticationEvent, AuthenticationState> {
   final UserRepository userRepository;
-  late final StreamSubscription<MyUser?>
-  _userSubscription; // Cần đăng ký Stream MyUser đã được created bên trong packages>user_repository
+  late final StreamSubscription<MyUser?> _userSubscription;
 
   AuthenticationBloc({required this.userRepository})
-    : super(AuthenticationState.unknown()) {
+    : super(const AuthenticationState.unknown()) {
     _userSubscription = userRepository.user.listen((user) {
       add(AuthenticationUserChanged(user));
     });
@@ -23,7 +22,7 @@ class AuthenticationBloc
       if (event.user != MyUser.empty) {
         emit(AuthenticationState.authenticated(event.user!));
       } else {
-        emit(AuthenticationState.unauthenticated());
+        emit(const AuthenticationState.unauthenticated());
       }
     });
   }

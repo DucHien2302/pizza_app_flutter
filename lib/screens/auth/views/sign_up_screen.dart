@@ -248,7 +248,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                           setState(() {
                             context.read<SignUpBloc>().add(
-                              SignUpRequired(myUser, passwordController.text),
+                              SignUpRequired(
+                                myUser, 
+                                passwordController.text
+                              ),
                             );
                           });
                         }
