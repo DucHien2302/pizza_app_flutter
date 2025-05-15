@@ -32,7 +32,7 @@ class DetailsScreen extends StatelessWidget {
                 image: DecorationImage(
                   image: AssetImage(
                     'assets/1.png'
-                  )
+                  ),
                 ),
               ),
             ),
