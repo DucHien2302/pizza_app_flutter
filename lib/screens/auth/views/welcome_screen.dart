@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../blocs/authentication_bloc/authentication_bloc.dart';
+import 'package:user_repository/user_repository.dart';
 import '../blocs/sign_in_bloc/sign_in_bloc.dart';
 import '../blocs/sign_up_bloc/sign_up_bloc.dart';
 import 'sign_in_screen.dart';
@@ -23,11 +23,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     tabController = TabController(initialIndex: 0, length: 2, vsync: this);
     super.initState();
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SingleChildScrollView(
         child: SizedBox(
           height: MediaQuery.of(context).size.height,
@@ -68,12 +67,11 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 50.0),
                         child: TabBar(
-                          controller: tabController,
-                          unselectedLabelColor: Theme.of(
+                          controller: tabController,                          unselectedLabelColor: Theme.of(
                             context,
-                          ).colorScheme.onBackground.withOpacity(0.5),
+                          ).colorScheme.onSurface.withOpacity(0.5),
                           labelColor:
-                              Theme.of(context).colorScheme.onBackground,
+                              Theme.of(context).colorScheme.onSurface,
                           tabs: const [
                             Padding(
                               padding: EdgeInsets.all(12.0),
@@ -94,24 +92,17 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       ),
                       Expanded(
                         child: TabBarView(
-                          controller: tabController,
-                          children: [
+                          controller: tabController,                          children: [
                             BlocProvider<SignInBloc>(
-                              create:
-                                  (context) => SignInBloc(
-                                    context
-                                        .read<AuthenticationBloc>()
-                                        .userRepository,
-                                  ),
+                              create: (context) => SignInBloc(
+                                context.read<UserRepository>(),
+                              ),
                               child: const SignInScreen(),
                             ),
                             BlocProvider<SignUpBloc>(
-                              create:
-                                  (context) => SignUpBloc(
-                                    context
-                                        .read<AuthenticationBloc>()
-                                        .userRepository,
-                                  ),
+                              create: (context) => SignUpBloc(
+                                context.read<UserRepository>(),
+                              ),
                               child: const SignUpScreen(),
                             ),
                           ],

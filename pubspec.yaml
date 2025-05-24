@@ -17,9 +17,12 @@ dependencies:
   bloc: ^9.0.0
   flutter_bloc: ^9.1.1
   equatable: ^2.0.7
-
   user_repository:
     path: packages/user_repository
+  pizza_repository:
+    path: packages/pizza_repository
+  cart_repository:
+    path: packages/cart_repository
 
 dev_dependencies:
   flutter_test:

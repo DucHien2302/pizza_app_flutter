@@ -161,55 +161,50 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
+                    children: [                      Text(
                         "⚈  1 uppercase",
                         style: TextStyle(
                           color:
                               containsUpperCase
                                   ? Colors.green
-                                  : Theme.of(context).colorScheme.onBackground,
+                                  : Theme.of(context).colorScheme.onSurface,
                         ),
-                      ),
-                      Text(
+                      ),                      Text(
                         "⚈  1 lowercase",
                         style: TextStyle(
                           color:
                               containsLowerCase
                                   ? Colors.green
-                                  : Theme.of(context).colorScheme.onBackground,
+                                  : Theme.of(context).colorScheme.onSurface,
                         ),
-                      ),
-                      Text(
+                      ),                      Text(
                         "⚈  1 number",
                         style: TextStyle(
                           color:
                               containsNumber
                                   ? Colors.green
-                                  : Theme.of(context).colorScheme.onBackground,
+                                  : Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ],
                   ),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
+                    children: [                      Text(
                         "⚈  1 special character",
                         style: TextStyle(
                           color:
                               containsSpecialChar
                                   ? Colors.green
-                                  : Theme.of(context).colorScheme.onBackground,
+                                  : Theme.of(context).colorScheme.onSurface,
                         ),
-                      ),
-                      Text(
+                      ),                      Text(
                         "⚈  8 minimum character",
                         style: TextStyle(
                           color:
                               contains8Length
                                   ? Colors.green
-                                  : Theme.of(context).colorScheme.onBackground,
+                                  : Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ],

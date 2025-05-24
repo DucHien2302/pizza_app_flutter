@@ -1,16 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:pizza_app/blocs/authentication_bloc/authentication_bloc.dart';
+import 'package:pizza_app/blocs/cart_bloc/cart_bloc.dart';
 import 'package:pizza_app/components/micro.dart';
+import 'package:pizza_repository/pizza_repository.dart';
 
-class DetailsScreen extends StatelessWidget {
-  const DetailsScreen({super.key});
+class DetailsScreen extends StatefulWidget {
+  final Pizza pizza;
+  const DetailsScreen(this.pizza, {super.key});
 
   @override
+  State<DetailsScreen> createState() => _DetailsScreenState();
+}
+
+class _DetailsScreenState extends State<DetailsScreen> {
+  int quantity = 1;
+  String? _getCurrentUserId() {
+    final authState = context.read<AuthenticationBloc>().state;
+    if (authState.status == AuthenticationStatus.authenticated) {
+      return authState.user?.userId;
+    }
+    return null;
+  }  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.background,
+        backgroundColor: Theme.of(context).colorScheme.surface,
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -31,7 +48,7 @@ class DetailsScreen extends StatelessWidget {
                 ],
                 image: DecorationImage(
                   image: AssetImage(
-                    'assets/1.png'
+                    widget.pizza.picture
                   ),
                 ),
               ),
@@ -55,11 +72,10 @@ class DetailsScreen extends StatelessWidget {
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
+                      children: [                        Expanded(
                           flex: 2,
                           child: Text(
-                            'Truffle Temptation Extravaganza',
+                            widget.pizza.name,
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold
@@ -74,7 +90,7 @@ class DetailsScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  '\$12.00',
+                                  '\$${widget.pizza.price - (widget.pizza.price * (widget.pizza.discount / 100))}',
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
@@ -82,7 +98,7 @@ class DetailsScreen extends StatelessWidget {
                                   ),
                                 ),
                                 Text(
-                                  '\$15.00',
+                                  '\$${widget.pizza.price}.00',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -96,51 +112,137 @@ class DetailsScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    SizedBox(height: 12,),
-                    Row(
+                    SizedBox(height: 12,),                    Row(
                       children: [
                         MyMicroWidget(
                           title: 'Calories',
-                          value: 267,
+                          value: widget.pizza.macros.calories,
                           icon: FontAwesomeIcons.fire,
                         ),
                         SizedBox(width: 10,),
                         MyMicroWidget(
                           title: 'Protein',
-                          value: 36,
+                          value: widget.pizza.macros.proteins,
                           icon: FontAwesomeIcons.dumbbell,
                         ),
                         SizedBox(width: 10),
                         MyMicroWidget(
                           title: 'Fat',
-                          value: 21,
+                          value: widget.pizza.macros.fat,
                           icon: FontAwesomeIcons.oilWell,
                         ),
                         SizedBox(width: 10),
                         MyMicroWidget(
                           title: 'Carbs',
-                          value: 38,
+                          value: widget.pizza.macros.carbs,
                           icon: FontAwesomeIcons.breadSlice,
                         ),
                       ],
+                    ),                    SizedBox(height: 40),
+                    // Quantity selector
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Số lượng: ',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                onPressed: () {
+                                  if (quantity > 1) {
+                                    setState(() {
+                                      quantity--;
+                                    });
+                                  }
+                                },
+                                icon: const Icon(Icons.remove),
+                                constraints: const BoxConstraints(
+                                  minWidth: 40,
+                                  minHeight: 40,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                child: Text(
+                                  '$quantity',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    quantity++;
+                                  });
+                                },
+                                icon: const Icon(Icons.add),
+                                constraints: const BoxConstraints(
+                                  minWidth: 40,
+                                  minHeight: 40,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 40),
+                    SizedBox(height: 20),
                     SizedBox(
                       width: MediaQuery.of(context).size.width,
                       height: 50,
-                      child: TextButton(
-                        onPressed: () {},
+                      child: TextButton(                        onPressed: () {
+                          final userId = _getCurrentUserId();
+                          if (userId != null) {
+                            context.read<CartBloc>().add(
+                              AddToCart(
+                                pizza: widget.pizza, 
+                                quantity: quantity, 
+                                userId: userId
+                              ),
+                            );
+                            
+                            // Show success message
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Added ${widget.pizza.name} to cart!'),
+                                duration: const Duration(seconds: 2),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          } else {
+                            // Show error message if user is not authenticated
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please log in to add items to cart'),
+                                duration: Duration(seconds: 2),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
                         style: TextButton.styleFrom(
                           elevation: 3.0,
                           backgroundColor: Colors.black,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
-                          ),
-                        ), 
-                        child: Text(
-                          'Buy Now',
-                            style: TextStyle(
+                          ),                        ), 
+                        child: const Text(
+                          'Add to Cart',
+                          style: TextStyle(
                             color: Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
