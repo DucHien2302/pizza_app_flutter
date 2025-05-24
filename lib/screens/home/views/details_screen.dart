@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:pizza_app/components/micro.dart';
+import 'package:pizza_repository/pizza_repository.dart';
 
 class DetailsScreen extends StatelessWidget {
-  const DetailsScreen({super.key});
+  final Pizza pizza;
+  const DetailsScreen(this.pizza, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +33,7 @@ class DetailsScreen extends StatelessWidget {
                 ],
                 image: DecorationImage(
                   image: AssetImage(
-                    'assets/1.png'
+                    pizza.picture
                   ),
                 ),
               ),
@@ -59,7 +61,7 @@ class DetailsScreen extends StatelessWidget {
                         Expanded(
                           flex: 2,
                           child: Text(
-                            'Truffle Temptation Extravaganza',
+                            pizza.name,
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold
@@ -74,7 +76,7 @@ class DetailsScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  '\$12.00',
+                                  '\$${pizza.price - (pizza.price * (pizza.discount / 100))}',
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
@@ -82,7 +84,7 @@ class DetailsScreen extends StatelessWidget {
                                   ),
                                 ),
                                 Text(
-                                  '\$15.00',
+                                  '\$${pizza.price}.00',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -101,25 +103,25 @@ class DetailsScreen extends StatelessWidget {
                       children: [
                         MyMicroWidget(
                           title: 'Calories',
-                          value: 267,
+                          value: pizza.macros.calories,
                           icon: FontAwesomeIcons.fire,
                         ),
                         SizedBox(width: 10,),
                         MyMicroWidget(
                           title: 'Protein',
-                          value: 36,
+                          value: pizza.macros.proteins,
                           icon: FontAwesomeIcons.dumbbell,
                         ),
                         SizedBox(width: 10),
                         MyMicroWidget(
                           title: 'Fat',
-                          value: 21,
+                          value: pizza.macros.fat,
                           icon: FontAwesomeIcons.oilWell,
                         ),
                         SizedBox(width: 10),
                         MyMicroWidget(
                           title: 'Carbs',
-                          value: 38,
+                          value: pizza.macros.carbs,
                           icon: FontAwesomeIcons.breadSlice,
                         ),
                       ],
