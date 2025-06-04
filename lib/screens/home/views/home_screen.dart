@@ -1,20 +1,22 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pizza_app/blocs/authentication_bloc/authentication_bloc.dart';
+import 'package:pizza_app/blocs/cart_bloc/cart_bloc.dart';
 import 'package:pizza_app/screens/auth/blocs/sign_in_bloc/sign_in_bloc.dart';
 import 'package:pizza_app/screens/home/blocs/get_pizza_bloc/get_pizza_bloc.dart';
 
+import 'cart_screen.dart';
 import 'details_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.background,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         title: Row(
           children: [
             Image.asset('assets/8.png', scale: 14),
@@ -24,9 +26,57 @@ class HomeScreen extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.w900, fontSize: 30),
             ),
           ],
-        ),
-        actions: [
-          IconButton(onPressed: () {}, icon: const Icon(CupertinoIcons.cart)),
+        ),        actions: [
+          BlocBuilder<CartBloc, CartState>(
+            builder: (context, cartState) {
+              int itemCount = 0;
+              if (cartState is CartLoaded) {
+                itemCount = cartState.totalItems;
+              }
+              
+              return Stack(
+                children: [
+                  IconButton(                    onPressed: () {
+                      final cartBloc = context.read<CartBloc>();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BlocProvider.value(
+                            value: cartBloc,
+                            child: const CartScreen(),
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(CupertinoIcons.cart),
+                  ),
+                  if (itemCount > 0)
+                    Positioned(
+                      right: 6,
+                      top: 6,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          '$itemCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),                ],              );
+            },
+          ),
           IconButton(
             onPressed: () {
               context.read<SignInBloc>().add(SignOutRequired());
@@ -56,15 +106,15 @@ class HomeScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(20),
-                      onTap: () {
+                      borderRadius: BorderRadius.circular(20),                      onTap: () {
+                        final cartBloc = context.read<CartBloc>();
                         Navigator.push(
                           context,
                           MaterialPageRoute<void>(
-                            builder:
-                                (BuildContext context) => DetailsScreen(
-                                  state.pizzas[i]
-                                ),
+                            builder: (BuildContext context) => BlocProvider.value(
+                              value: cartBloc,
+                              child: DetailsScreen(state.pizzas[i]),
+                            ),
                           ),
                         );
                       },
@@ -196,11 +246,40 @@ class HomeScreen extends StatelessWidget {
                                         ),
                                       ),
                                     ],
-                                  ),
-                                  IconButton(
-                                    onPressed: () {},
+                                  ),                                  IconButton(
+                                    onPressed: () {
+                                      final authState = context.read<AuthenticationBloc>().state;
+                                      if (authState.status == AuthenticationStatus.authenticated) {
+                                        final userId = authState.user?.userId;
+                                        if (userId != null) {
+                                          context.read<CartBloc>().add(
+                                            AddToCart(
+                                              pizza: state.pizzas[i], 
+                                              quantity: 1, 
+                                              userId: userId
+                                            ),
+                                          );
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Added ${state.pizzas[i].name} to cart!'),
+                                              duration: const Duration(seconds: 2),
+                                              backgroundColor: Colors.green,
+                                            ),
+                                          );
+                                        }
+                                      } else {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Please log in to add items to cart'),
+                                            duration: Duration(seconds: 2),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
+                                    },
                                     icon: Icon(
                                       CupertinoIcons.add_circled_solid,
+                                      color: Theme.of(context).colorScheme.primary,
                                     ),
                                   ),
                                 ],

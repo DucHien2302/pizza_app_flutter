@@ -11,7 +11,6 @@ class Pizza {
   int price;
   int discount;
   Macros macros;
-
   Pizza({
     required this.pizzaId,
     required this.picture,
@@ -23,6 +22,18 @@ class Pizza {
     required this.discount,
     required this.macros,
   });
+
+  static final empty = Pizza(
+    pizzaId: '',
+    picture: '',
+    isVeg: false,
+    spicy: 0,
+    name: '',
+    description: '',
+    price: 0,
+    discount: 0,
+    macros: Macros.empty,
+  );
 
   PizzaEntity toEntity() {
     return PizzaEntity(
