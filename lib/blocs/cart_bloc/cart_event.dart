@@ -73,3 +73,12 @@ class ClearCart extends CartEvent {
   @override
   List<Object?> get props => [userId];
 }
+
+class RefreshCart extends CartEvent {
+  final String userId;
+
+  const RefreshCart({required this.userId});
+
+  @override
+  List<Object?> get props => [userId];
+}

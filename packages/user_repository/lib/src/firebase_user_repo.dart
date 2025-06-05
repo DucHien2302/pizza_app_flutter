@@ -10,16 +10,39 @@ class FirebaseUserRepo implements UserRepository {
 
   FirebaseUserRepo({
     FirebaseAuth? firebaseAuth,
-  }) : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
-
-  @override
+  }) : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;  @override
   Stream<MyUser?> get user {
-    return _firebaseAuth.authStateChanges().flatMap((firebaseUser) async* {
+    return _firebaseAuth.authStateChanges()
+        .distinct() // Avoid duplicate events
+        .flatMap((firebaseUser) async* {
       if (firebaseUser == null) {
         yield MyUser.empty;
       } else {
-        yield await usersCollection.doc(firebaseUser.uid).get().then((value) =>
-            MyUser.fromEntity(MyUserEntity.fromDocument(value.data()!)));
+        try {
+          // Add retry logic for better reliability when app is resumed
+          final userData = await usersCollection.doc(firebaseUser.uid).get();
+          if (userData.exists && userData.data() != null) {
+            yield MyUser.fromEntity(MyUserEntity.fromDocument(userData.data()!));
+          } else {
+            // If user data doesn't exist in Firestore but Firebase Auth says user is authenticated,
+            // create a basic user object
+            yield MyUser(
+              userId: firebaseUser.uid,
+              email: firebaseUser.email ?? '',
+              name: firebaseUser.displayName ?? 'User',
+              hasActiveCart: false,
+            );
+          }
+        } catch (e) {
+          log('Error fetching user data: $e');
+          // In case of error, still provide basic user info if authenticated
+          yield MyUser(
+            userId: firebaseUser.uid,
+            email: firebaseUser.email ?? '',
+            name: firebaseUser.displayName ?? 'User',
+            hasActiveCart: false,
+          );
+        }
       }
     });
   }

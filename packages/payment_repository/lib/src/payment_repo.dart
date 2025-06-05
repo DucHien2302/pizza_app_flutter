@@ -78,4 +78,10 @@ abstract class PaymentRepository {
     String? vnpayTransactionCode,
     String? vnpayOrderInfo,
   });
+  /// Lưu response VNPAY vào Firestore
+  Future<void> saveVnPaymentResponse({
+    required String invoiceId,
+    required String userId,
+    required Map<String, dynamic> vnpResponse,
+  });
 }
