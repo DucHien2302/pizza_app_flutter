@@ -1,0 +1,29 @@
+name: payment_repository
+description: Repository for handling payment operations and invoice management
+publish_to: 'none'
+version: 0.0.1
+
+environment:
+  sdk: '>=3.1.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+    
+  equatable: ^2.0.7
+  cloud_firestore: ^5.6.7
+  crypto: ^3.0.3
+  url_launcher: ^6.2.2
+  uuid: ^4.2.1
+  cart_repository:
+    path: ../cart_repository
+  pizza_repository:
+    path: ../pizza_repository
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true

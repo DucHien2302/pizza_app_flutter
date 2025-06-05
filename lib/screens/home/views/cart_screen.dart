@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:cart_repository/cart_repository.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../blocs/cart_bloc/cart_bloc.dart';
 import '../../../blocs/authentication_bloc/authentication_bloc.dart';
+import '../../../blocs/payment_bloc/payment_bloc.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -20,7 +22,8 @@ class CartScreen extends StatelessWidget {
   Widget build(BuildContext context) {    return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,        title: const Text(
+        backgroundColor: Theme.of(context).colorScheme.surface,        
+        title: const Text(
           'Shopping Cart',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
@@ -42,7 +45,8 @@ class CartScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: BlocBuilder<CartBloc, CartState>(        builder: (context, state) {
+      body: BlocBuilder<CartBloc, CartState>(        
+        builder: (context, state) {
           if (state is CartInitial || state is CartLoading) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -128,7 +132,8 @@ class CartScreen extends StatelessWidget {
             size: 80,
             color: Colors.grey[400],
           ),
-          const SizedBox(height: 20),          Text(
+          const SizedBox(height: 20),          
+          Text(
             'Shopping cart is empty',
             style: TextStyle(
               fontSize: 24,
@@ -270,7 +275,8 @@ class CartScreen extends StatelessWidget {
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
-                            ),                            IconButton(
+                            ),                            
+                            IconButton(
                               onPressed: () {
                                 context.read<CartBloc>().add(
                                   UpdateQuantity(
@@ -287,7 +293,8 @@ class CartScreen extends StatelessWidget {
                               ),
                             ),
                           ],
-                        ),                      ),
+                        ),                      
+                      ),
                       const Spacer(),
                       
                       // Delete button
@@ -382,7 +389,8 @@ class CartScreen extends StatelessWidget {
   void _showClearCartDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (BuildContext dialogContext) {        return AlertDialog(
+      builder: (BuildContext dialogContext) {        
+        return AlertDialog(
           title: const Text('Clear Cart'),
           content: const Text('Are you sure you want to remove all items from your cart?'),
           actions: [
@@ -404,16 +412,150 @@ class CartScreen extends StatelessWidget {
       },
     );
   }
-  
-  void _showCheckoutDialog(BuildContext context) {
+    void _showCheckoutDialog(BuildContext context) {
+    final cartState = context.read<CartBloc>().state;
+    if (cartState is! CartLoaded) return;
+
+    final userId = _getCurrentUserId(context);
+    if (userId.isEmpty) return;
+
+    // Calculate total amount
+    final totalAmount = cartState.items.fold<double>(
+      0,
+      (sum, item) => sum + (item.pizza.price * item.quantity),
+    );
+
     showDialog(
       context: context,
-      builder: (BuildContext dialogContext) {        return AlertDialog(
-          title: const Text('Checkout'),
-          content: const Text('Checkout functionality will be developed in the future!'),
+      builder: (BuildContext dialogContext) {
+        return BlocProvider.value(
+          value: context.read<PaymentBloc>(),
+          child: AlertDialog(
+            title: const Text('Checkout'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,              
+              children: [
+                Text(
+                  'Total Amount: \$${totalAmount.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'VND Amount: ₫${(totalAmount * 25000).toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text('Payment Method: VNPAY'),
+                const SizedBox(height: 20),
+                BlocConsumer<PaymentBloc, PaymentState>(                  
+                  listener: (context, state) {
+                    if (state is PaymentUrlGenerated) {
+                      Navigator.of(dialogContext).pop();
+                      _launchVNPayUrl(context, state.paymentUrl);
+                    } else if (state is PaymentFailure) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Payment failed: ${state.error}'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    } else if (state is PaymentSuccess) {
+                      Navigator.of(dialogContext).pop();
+                      _showPaymentSuccessDialog(context);
+                    }
+                  },
+                  builder: (context, state) {
+                    if (state is PaymentLoading) {
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(                onPressed: () {
+                  context.read<PaymentBloc>().add(
+                    CreateVNPayPayment(
+                      userId: userId,
+                      cartItems: cartState.items,
+                      returnUrl: 'pizzaapp://payment_result',
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Pay with VNPAY'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _launchVNPayUrl(BuildContext context, String url) async {
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+      } else {
+        throw 'Could not launch $url';
+      }
+    } catch (e) {
+      print('Error launching VNPAY URL: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not open payment page'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _showPaymentSuccessDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green, size: 30),
+              SizedBox(width: 10),
+              Text('Payment Successful'),
+            ],
+          ),
+          content: const Text(
+            'Your payment has been processed successfully! Your order is being prepared.',
+          ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                // Navigate back to home or orders screen
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+              ),
               child: const Text('OK'),
             ),
           ],
