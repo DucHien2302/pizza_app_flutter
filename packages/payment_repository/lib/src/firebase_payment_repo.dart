@@ -7,6 +7,7 @@ import '../payment_repository.dart';
 class FirebasePaymentRepository implements PaymentRepository {
   final invoicesCollection = FirebaseFirestore.instance.collection('invoices');
   final invoiceDetailsCollection = FirebaseFirestore.instance.collection('invoice_details');
+  final vnPaymentResponsesCollection = FirebaseFirestore.instance.collection('vn_payment_responses');
   
   final CartRepository _cartRepository;
   final _uuid = const Uuid();
@@ -207,7 +208,6 @@ class FirebasePaymentRepository implements PaymentRepository {
       return false;
     }
   }
-
   @override
   Future<bool> processSuccessfulPayment({
     required String invoiceId,
@@ -224,13 +224,57 @@ class FirebasePaymentRepository implements PaymentRepository {
         vnpayOrderInfo: vnpayOrderInfo,
       );
       
-      // Xóa giỏ hàng
-      await _cartRepository.clearCart(userId);
+      // Xóa giỏ hàng với retry logic
+      await _clearCartWithRetry(userId);
       
       return true;
     } catch (e) {
       log('Error processing successful payment: $e');
       return false;
+    }
+  }
+
+  Future<void> _clearCartWithRetry(String userId, {int retryCount = 3}) async {
+    for (int i = 0; i < retryCount; i++) {
+      try {
+        await _cartRepository.clearCart(userId);
+        
+        // Verify cart is actually cleared
+        final items = await _cartRepository.getCartItems(userId).first;
+        if (items.isEmpty) {
+          log('Cart cleared successfully for user: $userId');
+          return;
+        } else {
+          log('Cart not cleared completely, retrying... Attempt ${i + 1}');
+          if (i == retryCount - 1) {
+            throw Exception('Failed to clear cart after $retryCount attempts');
+          }
+          await Future.delayed(Duration(milliseconds: 500));
+        }
+      } catch (e) {
+        log('Error clearing cart (attempt ${i + 1}): $e');
+        if (i == retryCount - 1) rethrow;
+        await Future.delayed(Duration(milliseconds: 500));
+      }
+    }
+  }
+
+  @override
+  Future<void> saveVnPaymentResponse({
+    required String invoiceId,
+    required String userId,
+    required Map<String, dynamic> vnpResponse,
+  }) async {
+    try {
+      await vnPaymentResponsesCollection.add({
+        'invoiceId': invoiceId,
+        'userId': userId,
+        'vnpResponse': vnpResponse,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      log('Error saving VNPAY response: $e');
+      rethrow;
     }
   }
 }

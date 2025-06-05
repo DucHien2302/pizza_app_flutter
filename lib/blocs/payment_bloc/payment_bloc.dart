@@ -52,24 +52,39 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
     }
   }
 
-
   Future<void> _onValidateVNPayResponse(
     ValidateVNPayResponse event,
     Emitter<PaymentState> emit,
   ) async {
     try {
       final orderId = event.queryParameters['vnp_TxnRef'] ?? '';
+      print('Validating VNPay response for order: $orderId');
+      print('Query parameters: ${event.queryParameters}');
+      
       emit(PaymentProcessing(orderId: orderId));
 
       final isValid = _paymentRepository.validateVNPayResponse(event.queryParameters);
-
-      if (isValid) {
+      print('Signature validation result: $isValid');      if (isValid) {
         final responseCode = event.queryParameters['vnp_ResponseCode'];
-        
-        if (responseCode == '00') {
+        print('VNPay response code: $responseCode');
+          if (responseCode == '00') {
+          print('Payment successful, processing...');
           // Payment successful - use processSuccessfulPayment
           final invoice = await _paymentRepository.getInvoice(orderId);
           if (invoice != null) {            
+            // Lưu response VNPAY vào Firestore
+            try {
+              await _paymentRepository.saveVnPaymentResponse(
+                invoiceId: orderId,
+                userId: invoice.userId,
+                vnpResponse: Map<String, dynamic>.from(event.queryParameters),
+              );
+              print('VNPAY response saved successfully');
+            } catch (e) {
+              print('Error saving VNPAY response: $e');
+            }
+            
+            print('Processing successful payment...');
             final success = await _paymentRepository.processSuccessfulPayment(
               invoiceId: orderId,
               userId: invoice.userId,
@@ -78,7 +93,12 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
             );
 
             if (success) {
+              print('Payment processed successfully');
               final updatedInvoice = await _paymentRepository.getInvoice(orderId);
+              
+              // Add a small delay to ensure cart clearing is processed
+              await Future.delayed(const Duration(milliseconds: 1000));
+              
               emit(PaymentSuccess(
                 invoice: updatedInvoice!,
                 transactionNo: event.queryParameters['vnp_TransactionNo'] ?? '',
@@ -109,11 +129,11 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
           invoiceId: orderId,
           paymentStatus: 'failed',
         );
-        
-        emit(const PaymentFailure(
+          emit(const PaymentFailure(
           error: 'Invalid payment response signature',
         ));
-      }    } catch (error) {
+      }
+    } catch (error) {
       emit(PaymentFailure(error: error.toString()));
     }
   }
