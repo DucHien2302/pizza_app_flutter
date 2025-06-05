@@ -257,21 +257,25 @@ class FirebasePaymentRepository implements PaymentRepository {
         await Future.delayed(Duration(milliseconds: 500));
       }
     }
-  }
-
-  @override
+  }  @override
   Future<void> saveVnPaymentResponse({
     required String invoiceId,
     required String userId,
     required Map<String, dynamic> vnpResponse,
   }) async {
     try {
-      await vnPaymentResponsesCollection.add({
+      log('FirebasePaymentRepository - Saving VNPay response for invoiceId: $invoiceId, userId: $userId');
+      log('FirebasePaymentRepository - VNPay response data: $vnpResponse');
+      
+      // Use invoiceId as document ID for easier retrieval
+      await vnPaymentResponsesCollection.doc(invoiceId).set({
         'invoiceId': invoiceId,
         'userId': userId,
         'vnpResponse': vnpResponse,
         'createdAt': FieldValue.serverTimestamp(),
       });
+      
+      log('FirebasePaymentRepository - VNPay response saved with document ID: $invoiceId');
     } catch (e) {
       log('Error saving VNPAY response: $e');
       rethrow;

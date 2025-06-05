@@ -71,9 +71,11 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
           print('Payment successful, processing...');
           // Payment successful - use processSuccessfulPayment
           final invoice = await _paymentRepository.getInvoice(orderId);
-          if (invoice != null) {            
-            // Lưu response VNPAY vào Firestore
+          if (invoice != null) {              // Lưu response VNPAY vào Firestore
             try {
+              print('PaymentBloc - Saving VNPay response for invoiceId: $orderId, userId: ${invoice.userId}');
+              print('PaymentBloc - VNPay parameters: ${event.queryParameters}');
+              
               await _paymentRepository.saveVnPaymentResponse(
                 invoiceId: orderId,
                 userId: invoice.userId,

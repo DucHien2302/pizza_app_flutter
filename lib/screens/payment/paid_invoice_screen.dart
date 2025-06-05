@@ -86,18 +86,25 @@ class PaidInvoiceScreen extends StatelessWidget {
         );
       },
     );
-  }
-
-  Widget _buildVNPayInfo() {
-    return StreamBuilder<QuerySnapshot>(
+  }  Widget _buildVNPayInfo() {
+    print('PaidInvoiceScreen - Looking for VNPay data with invoiceId: $invoiceId, userId: $userId');
+    
+    return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance
           .collection('vn_payment_responses')
-          .where('invoiceId', isEqualTo: invoiceId)
-          .where('userId', isEqualTo: userId)
-          .orderBy('createdAt', descending: true)
-          .limit(1)
+          .doc(invoiceId)
           .snapshots(),
       builder: (context, snapshot) {
+        print('PaidInvoiceScreen - StreamBuilder state: ${snapshot.connectionState}');
+        print('PaidInvoiceScreen - Has data: ${snapshot.hasData}');
+        if (snapshot.hasData && snapshot.data!.exists) {
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+          print('PaidInvoiceScreen - Doc data: $data');
+        }
+        if (snapshot.hasError) {
+          print('PaidInvoiceScreen - Error: ${snapshot.error}');
+        }
+        
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Card(
             child: Padding(
@@ -107,16 +114,22 @@ class PaidInvoiceScreen extends StatelessWidget {
           );
         }
         
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Card(
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          return Card(
             child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('Không tìm thấy thông tin VNPAY'),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Không tìm thấy thông tin VNPAY'),
+                  const SizedBox(height: 8),
+                  Text('Invoice ID: $invoiceId', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  Text('User ID: $userId', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                ],
+              ),
             ),
           );
-        }
-
-        final data = snapshot.data!.docs.first.data() as Map<String, dynamic>;
+        }        final data = snapshot.data!.data() as Map<String, dynamic>;
         final vnpResponseRaw = data['vnpResponse'];
         Map<String, dynamic> vnpResponse = {};
         
