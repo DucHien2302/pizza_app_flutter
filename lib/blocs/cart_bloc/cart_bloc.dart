@@ -20,6 +20,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     on<UpdateQuantity>(_onUpdateQuantity);
     on<ClearCart>(_onClearCart);
     on<CartUpdated>(_onCartUpdated);
+    on<RefreshCart>(_onRefreshCart);
   }
 
   @override
@@ -82,6 +83,18 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   void _onClearCart(ClearCart event, Emitter<CartState> emit) async {
     try {
       await _cartRepository.clearCart(event.userId);
+    } catch (e) {
+      emit(CartError(error: e.toString()));
+    }
+  }
+
+  void _onRefreshCart(RefreshCart event, Emitter<CartState> emit) async {
+    try {
+      emit(CartLoading());
+      await _cartSubscription?.cancel();
+      _cartSubscription = _cartRepository.getCartItems(event.userId).listen(
+        (cartItems) => add(CartUpdated(items: cartItems)),
+      );
     } catch (e) {
       emit(CartError(error: e.toString()));
     }

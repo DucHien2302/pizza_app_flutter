@@ -110,20 +110,23 @@ class FirebaseCartRepository implements CartRepository {
       rethrow;
     }
   }
-
   @override
   Future<void> clearCart(String userId) async {
     try {
+      print('Clearing cart for user: $userId');
       final batch = FirebaseFirestore.instance.batch();
       final cartDocs = await cartCollection
           .where('userId', isEqualTo: userId)
           .get();
+      
+      print('Found ${cartDocs.docs.length} cart items to delete');
       
       for (var doc in cartDocs.docs) {
         batch.delete(doc.reference);
       }
       
       await batch.commit();
+      print('Cart cleared successfully for user: $userId');
     } catch (e) {
       log('Error clearing cart: $e');
       rethrow;
