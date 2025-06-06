@@ -16,6 +16,7 @@ import 'search_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -33,7 +34,7 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
         actions: [
-          // Lịch sử thanh toán
+          // Payment History Icon
           IconButton(
             tooltip: 'Lịch sử thanh toán',
             icon: const Icon(Icons.history, color: Colors.green),
@@ -128,6 +129,7 @@ class HomeScreen extends StatelessWidget {
               );
             },
           ),
+          // Sign Out Icon
           IconButton(
             onPressed: () {
               context.read<SignInBloc>().add(SignOutRequired());
@@ -173,9 +175,9 @@ class HomeScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Hình ảnh pizza
+                          // Pizza Image
                           ClipRRect(
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                             child: Image.asset(
                               state.pizzas[i].picture,
                               width: double.infinity,
@@ -183,34 +185,31 @@ class HomeScreen extends StatelessWidget {
                               fit: BoxFit.cover,
                             ),
                           ),
-                          // Nội dung card
+                          // Card Content
                           Expanded(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(vertical: 8.0),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  // Veg/Non-Veg and Spicy Indicators
                                   Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 12.0),
                                     child: Row(
                                       children: [
                                         Container(
                                           decoration: BoxDecoration(
-                                            color: state.pizzas[i].isVeg
-                                                ? Colors.green
-                                                : Colors.red,
+                                            color: state.pizzas[i].isVeg ? Colors.green : Colors.red,
                                             borderRadius: BorderRadius.circular(30),
                                           ),
                                           child: Padding(
-                                            padding: EdgeInsets.symmetric(
+                                            padding: const EdgeInsets.symmetric(
                                               vertical: 4,
                                               horizontal: 8,
                                             ),
                                             child: Text(
-                                              state.pizzas[i].isVeg
-                                                  ? "VEG"
-                                                  : "NON-VEG",
-                                              style: TextStyle(
+                                              state.pizzas[i].isVeg ? "VEG" : "NON-VEG",
+                                              style: const TextStyle(
                                                 color: Colors.white,
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 10,
@@ -225,7 +224,7 @@ class HomeScreen extends StatelessWidget {
                                             borderRadius: BorderRadius.circular(30),
                                           ),
                                           child: Padding(
-                                            padding: EdgeInsets.symmetric(
+                                            padding: const EdgeInsets.symmetric(
                                               vertical: 4,
                                               horizontal: 8,
                                             ),
@@ -233,14 +232,14 @@ class HomeScreen extends StatelessWidget {
                                               state.pizzas[i].spicy == 1
                                                   ? "🌶️ BLAND"
                                                   : state.pizzas[i].spicy == 2
-                                                  ? "🌶️ BALANCE"
-                                                  : "🌶️ SPICY",
+                                                      ? "🌶️ BALANCE"
+                                                      : "🌶️ SPICY",
                                               style: TextStyle(
                                                 color: state.pizzas[i].spicy == 1
                                                     ? Colors.green
                                                     : state.pizzas[i].spicy == 2
-                                                    ? Colors.orange
-                                                    : Colors.redAccent,
+                                                        ? Colors.orange
+                                                        : Colors.redAccent,
                                                 fontWeight: FontWeight.w800,
                                                 fontSize: 10,
                                               ),
@@ -250,12 +249,13 @@ class HomeScreen extends StatelessWidget {
                                       ],
                                     ),
                                   ),
-                                  SizedBox(height: 8),
+                                  const SizedBox(height: 8),
+                                  // Pizza Name
                                   Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 12.0),
                                     child: Text(
                                       state.pizzas[i].name,
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -263,7 +263,8 @@ class HomeScreen extends StatelessWidget {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  SizedBox(height: 4),
+                                  const SizedBox(height: 4),
+                                  // Pizza Description
                                   Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 12.0),
                                     child: Text(
@@ -276,15 +277,19 @@ class HomeScreen extends StatelessWidget {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  SizedBox(height: 4),
-                                  // Rating display
+                                  const SizedBox(height: 4),
+                                  // Rating Display
                                   Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 12.0),
                                     child: StreamBuilder<List<Review>>(
-                                      stream: RepositoryProvider.of<PizzaRepo>(context).getReviewsStreamForPizza(state.pizzas[i].pizzaId),
+                                      stream: RepositoryProvider.of<PizzaRepo>(context)
+                                          .getReviewsStreamForPizza(state.pizzas[i].pizzaId),
                                       builder: (context, snapshot) {
                                         final reviews = snapshot.data ?? [];
-                                        final averageRating = reviews.isEmpty ? 0.0 : reviews.map((r) => r.rating).reduce((a, b) => a + b) / (reviews.isEmpty ? 1 : reviews.length);
+                                        final averageRating = reviews.isEmpty
+                                            ? 0.0
+                                            : reviews.map((r) => r.rating).reduce((a, b) => a + b) /
+                                                (reviews.isEmpty ? 1 : reviews.length);
                                         return Row(
                                           children: [
                                             StarRating(
@@ -304,7 +309,8 @@ class HomeScreen extends StatelessWidget {
                                       },
                                     ),
                                   ),
-                                  Spacer(),
+                                  const Spacer(),
+                                  // Price and Add to Cart
                                   Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 12.0),
                                     child: Row(
@@ -320,7 +326,7 @@ class HomeScreen extends StatelessWidget {
                                                 fontWeight: FontWeight.w700,
                                               ),
                                             ),
-                                            SizedBox(width: 5),
+                                            const SizedBox(width: 5),
                                             Text(
                                               "\$${state.pizzas[i].price.toStringAsFixed(2)}",
                                               style: TextStyle(
@@ -339,12 +345,12 @@ class HomeScreen extends StatelessWidget {
                                               final userId = authState.user?.userId;
                                               if (userId != null) {
                                                 context.read<CartBloc>().add(
-                                                  AddToCart(
-                                                    pizza: state.pizzas[i],
-                                                    quantity: 1,
-                                                    userId: userId
-                                                  ),
-                                                );
+                                                      AddToCart(
+                                                        pizza: state.pizzas[i],
+                                                        quantity: 1,
+                                                        userId: userId,
+                                                      ),
+                                                    );
                                                 ScaffoldMessenger.of(context).showSnackBar(
                                                   SnackBar(
                                                     content: Text('Added ${state.pizzas[i].name} to cart!'),
@@ -382,14 +388,12 @@ class HomeScreen extends StatelessWidget {
                 },
               );
             } else if (state is GetPizzaLoading) {
-              return Center(
+              return const Center(
                 child: CircularProgressIndicator(),
               );
             } else {
-              return Center(
-                child: Text(
-                  'An error has occured...'
-                ),
+              return const Center(
+                child: Text('An error has occurred...'),
               );
             }
           },
