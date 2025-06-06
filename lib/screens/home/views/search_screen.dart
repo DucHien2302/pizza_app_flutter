@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pizza_app/blocs/authentication_bloc/authentication_bloc.dart';
 import 'package:pizza_app/blocs/cart_bloc/cart_bloc.dart';
+import 'package:pizza_app/components/star_rating.dart';
 import 'package:pizza_app/screens/home/blocs/search_bloc/search_bloc.dart';
 import 'package:pizza_app/screens/home/views/details_screen.dart';
+import 'package:pizza_repository/pizza_repository.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -140,7 +142,8 @@ class _SearchScreenState extends State<SearchScreen> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: InkWell(
-                          borderRadius: BorderRadius.circular(20),                          onTap: () {
+                          borderRadius: BorderRadius.circular(20),
+                          onTap: () {
                             // Get all necessary blocs and pass them to details screen
                             final cartBloc = context.read<CartBloc>();
                             final authBloc = context.read<AuthenticationBloc>();
@@ -161,145 +164,203 @@ class _SearchScreenState extends State<SearchScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Image.asset(pizza.picture),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color: pizza.isVeg ? Colors.green : Colors.red,
-                                        borderRadius: BorderRadius.circular(30),
-                                      ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 4,
-                                          horizontal: 8,
-                                        ),
-                                        child: Text(
-                                          pizza.isVeg ? 'VEG' : 'NON-VEG',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w800,
-                                            fontSize: 10,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.green.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(30),
-                                      ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 4,
-                                          horizontal: 8,
-                                        ),
-                                        child: Text(
-                                          pizza.spicy == 1
-                                              ? '🌶️ MILD'
-                                              : pizza.spicy == 2
-                                                  ? '🌶️ BALANCE'
-                                                  : '🌶️ SPICY',
-                                          style: const TextStyle(
-                                            color: Colors.green,
-                                            fontWeight: FontWeight.w800,
-                                            fontSize: 10,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                              // Pizza image with fixed height
+                              ClipRRect(
+                                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                                child: Image.asset(
+                                  pizza.picture,
+                                  width: double.infinity,
+                                  height: 200,
+                                  fit: BoxFit.cover,
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                                child: Text(
-                                  pizza.name,
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                                child: Text(
-                                  pizza.description,
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: Colors.grey.shade500,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                              // Content section in an Expanded
+                              Expanded(
                                 child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "\$${pizza.price - (pizza.price * (pizza.discount / 100))}",
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              color: Theme.of(context).colorScheme.primary,
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 5),
-                                          Text(
-                                            "\$${pizza.price}.00",
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.grey.shade500,
-                                              fontWeight: FontWeight.w700,
-                                              decoration: TextDecoration.lineThrough,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      IconButton(
-                                        onPressed: () {
-                                          final authState = context.read<AuthenticationBloc>().state;
-                                          if (authState.status == AuthenticationStatus.authenticated) {
-                                            final userId = authState.user?.userId;
-                                            if (userId != null) {
-                                              context.read<CartBloc>().add(
-                                                AddToCart(
-                                                  pizza: pizza,
-                                                  quantity: 1,
-                                                  userId: userId,
-                                                ),
-                                              );
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(
-                                                  content: Text('Added ${pizza.name} to cart!'),
-                                                  duration: const Duration(seconds: 2),
-                                                  backgroundColor: Colors.green,
-                                                ),
-                                              );
-                                            }
-                                          } else {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(
-                                                content: Text('Please log in to add items to cart'),
-                                                duration: Duration(seconds: 2),
-                                                backgroundColor: Colors.red,
+                                      // Tags row
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                color: pizza.isVeg ? Colors.green : Colors.red,
+                                                borderRadius: BorderRadius.circular(30),
                                               ),
+                                              child: Padding(
+                                                padding: const EdgeInsets.symmetric(
+                                                  vertical: 4,
+                                                  horizontal: 8,
+                                                ),
+                                                child: Text(
+                                                  pizza.isVeg ? 'VEG' : 'NON-VEG',
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w800,
+                                                    fontSize: 10,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.green.withOpacity(0.2),
+                                                borderRadius: BorderRadius.circular(30),
+                                              ),
+                                              child: Padding(
+                                                padding: const EdgeInsets.symmetric(
+                                                  vertical: 4,
+                                                  horizontal: 8,
+                                                ),
+                                                child: Text(
+                                                  pizza.spicy == 1
+                                                      ? '🌶️ MILD'
+                                                      : pizza.spicy == 2
+                                                          ? '🌶️ BALANCE'
+                                                          : '🌶️ SPICY',
+                                                  style: TextStyle(
+                                                    color: pizza.spicy == 1
+                                                        ? Colors.green
+                                                        : pizza.spicy == 2
+                                                            ? Colors.orange
+                                                            : Colors.redAccent,
+                                                    fontWeight: FontWeight.w800,
+                                                    fontSize: 10,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      // Pizza name
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                        child: Text(
+                                          pizza.name,
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      // Description
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                        child: Text(
+                                          pizza.description,
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: Colors.grey.shade500,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      // Rating display
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                        child: StreamBuilder<List<Review>>(
+                                          stream: RepositoryProvider.of<PizzaRepo>(context).getReviewsStreamForPizza(pizza.pizzaId),
+                                          builder: (context, snapshot) {
+                                            final reviews = snapshot.data ?? [];
+                                            final averageRating = reviews.isEmpty ? 0.0 : reviews.map((r) => r.rating).reduce((a, b) => a + b) / reviews.length;
+                                            return Row(
+                                              children: [
+                                                StarRating(
+                                                  rating: averageRating,
+                                                  size: 14,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  '(${reviews.length})',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey.shade600,
+                                                  ),
+                                                ),
+                                              ],
                                             );
-                                          }
-                                        },
-                                        icon: Icon(
-                                          CupertinoIcons.add_circled_solid,
-                                          color: Theme.of(context).colorScheme.primary,
+                                          },
+                                        ),
+                                      ),
+                                      // Spacer to push price section to the bottom
+                                      const Spacer(),
+                                      // Price and Add to Cart section
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  "\$${(pizza.price - (pizza.price * (pizza.discount / 100))).toStringAsFixed(1)}",
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    color: Theme.of(context).colorScheme.primary,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 5),
+                                                Text(
+                                                  "\$${pizza.price.toStringAsFixed(2)}",
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey.shade500,
+                                                    fontWeight: FontWeight.w700,
+                                                    decoration: TextDecoration.lineThrough,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            IconButton(
+                                              onPressed: () {
+                                                final authState = context.read<AuthenticationBloc>().state;
+                                                if (authState.status == AuthenticationStatus.authenticated) {
+                                                  final userId = authState.user?.userId;
+                                                  if (userId != null) {
+                                                    context.read<CartBloc>().add(
+                                                      AddToCart(
+                                                        pizza: pizza,
+                                                        quantity: 1,
+                                                        userId: userId,
+                                                      ),
+                                                    );
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text('Added ${pizza.name} to cart!'),
+                                                        duration: const Duration(seconds: 2),
+                                                        backgroundColor: Colors.green,
+                                                      ),
+                                                    );
+                                                  }
+                                                } else {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text('Please log in to add items to cart'),
+                                                      duration: Duration(seconds: 2),
+                                                      backgroundColor: Colors.red,
+                                                    ),
+                                                  );
+                                                }
+                                              },
+                                              icon: Icon(
+                                                CupertinoIcons.add_circled_solid,
+                                                color: Theme.of(context).colorScheme.primary,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
