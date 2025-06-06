@@ -5,9 +5,11 @@ import 'package:pizza_app/blocs/authentication_bloc/authentication_bloc.dart';
 import 'package:pizza_app/blocs/cart_bloc/cart_bloc.dart';
 import 'package:pizza_app/screens/auth/blocs/sign_in_bloc/sign_in_bloc.dart';
 import 'package:pizza_app/screens/home/blocs/get_pizza_bloc/get_pizza_bloc.dart';
+import 'package:pizza_app/screens/home/blocs/search_bloc/search_bloc.dart';
 
 import 'cart_screen.dart';
 import 'details_screen.dart';
+import 'search_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -26,7 +28,35 @@ class HomeScreen extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.w900, fontSize: 30),
             ),
           ],
-        ),        actions: [
+        ),        actions: [          // Search Icon
+          IconButton(
+            onPressed: () {
+              final getPizzaBloc = context.read<GetPizzaBloc>();
+              final cartBloc = context.read<CartBloc>();
+              final authBloc = context.read<AuthenticationBloc>();
+              final state = getPizzaBloc.state;
+              
+              if (state is GetPizzaSuccess) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MultiBlocProvider(
+                      providers: [
+                        BlocProvider(
+                          create: (context) => SearchBloc(allPizzas: state.pizzas),
+                        ),
+                        BlocProvider.value(value: cartBloc),
+                        BlocProvider.value(value: authBloc),
+                      ],
+                      child: const SearchScreen(),
+                    ),
+                  ),
+                );
+              }
+            },
+            icon: const Icon(CupertinoIcons.search),
+          ),
+          // Cart Icon
           BlocBuilder<CartBloc, CartState>(
             builder: (context, cartState) {
               int itemCount = 0;
@@ -76,8 +106,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),                ],              );
             },
-          ),
-          IconButton(
+          ),          IconButton(
             onPressed: () {
               context.read<SignInBloc>().add(SignOutRequired());
             },

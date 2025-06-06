@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:cart_repository/cart_repository.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:io';
 import '../../../blocs/cart_bloc/cart_bloc.dart';
 import '../../../blocs/authentication_bloc/authentication_bloc.dart';
 import '../../../blocs/payment_bloc/payment_bloc.dart';
@@ -485,8 +486,22 @@ class CartScreen extends StatelessWidget {
               TextButton(
                 onPressed: () => Navigator.of(dialogContext).pop(),
                 child: const Text('Cancel'),
-              ),
-              ElevatedButton(                onPressed: () {
+              ),              ElevatedButton(                onPressed: () async {
+                  // Test network connection first
+                  bool canReachVNPay = await _testVNPayConnection();
+                  print('VNPay connectivity test: $canReachVNPay');
+                  
+                  if (!canReachVNPay) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Network issue: Cannot reach VNPay servers. Please check your internet connection.'),
+                        backgroundColor: Colors.orange,
+                        duration: Duration(seconds: 5),
+                      ),
+                    );
+                  }
+                  
+                  // Proceed with payment regardless (URL might still work)
                   context.read<PaymentBloc>().add(
                     CreateVNPayPayment(
                       userId: userId,
@@ -507,24 +522,81 @@ class CartScreen extends StatelessWidget {
       },
     );
   }
+  // Test network connectivity to VNPay
+  Future<bool> _testVNPayConnection() async {
+    try {
+      final result = await InternetAddress.lookup('sandbox.vnpayment.vn');
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        print('VNPay sandbox is reachable');
+        return true;
+      }
+    } catch (e) {
+      print('Cannot reach VNPay sandbox: $e');
+    }
+    return false;
+  }
 
   Future<void> _launchVNPayUrl(BuildContext context, String url) async {
     try {
+      print('Attempting to launch VNPay URL: $url');
       final uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-        );
+      
+      // Log URI details
+      print('Parsed URI: $uri');
+      print('URI scheme: ${uri.scheme}');
+      print('URI host: ${uri.host}');
+      
+      // Check if URL can be launched
+      bool canLaunch = await canLaunchUrl(uri);
+      print('Can launch URL: $canLaunch');
+      
+      if (canLaunch) {
+        // Try different launch modes
+        try {
+          // First try with platform default (might open in WebView)
+          await launchUrl(
+            uri,
+            mode: LaunchMode.platformDefault,
+          );
+          print('Successfully launched with platformDefault mode');
+        } catch (e1) {
+          print('Failed with platformDefault mode: $e1');
+          try {
+            // Try with external application (opens in browser)
+            await launchUrl(
+              uri,
+              mode: LaunchMode.externalApplication,
+            );
+            print('Successfully launched with externalApplication mode');
+          } catch (e2) {
+            print('Failed with externalApplication mode: $e2');
+            // Last resort: try with inAppWebView
+            await launchUrl(
+              uri,
+              mode: LaunchMode.inAppWebView,
+            );
+            print('Successfully launched with inAppWebView mode');
+          }
+        }
       } else {
-        throw 'Could not launch $url';
+        throw 'Cannot launch URL: $url';
       }
     } catch (e) {
       print('Error launching VNPAY URL: $e');
+      
+      // Show detailed error message
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not open payment page'),
+        SnackBar(
+          content: Text('Could not open payment page: $e'),
           backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+          action: SnackBarAction(
+            label: 'Copy URL',
+            onPressed: () {
+              // You could implement clipboard copy here if needed
+              print('VNPay URL: $url');
+            },
+          ),
         ),
       );
     }

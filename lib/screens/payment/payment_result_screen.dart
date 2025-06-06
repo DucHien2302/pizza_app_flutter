@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/payment_bloc/payment_bloc.dart';
+import '../../blocs/notification_bloc/notification_bloc.dart';
+import '../../components/push_notification_service.dart';
 import 'paid_invoice_screen.dart';
 
 class PaymentResultScreen extends StatefulWidget {
@@ -37,11 +39,23 @@ class _PaymentResultScreenState extends State<PaymentResultScreen> {  @override
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,      body: BlocListener<PaymentBloc, PaymentState>(
-        listener: (context, state) {
+      backgroundColor: Theme.of(context).colorScheme.surface,      body: BlocListener<PaymentBloc, PaymentState>(        listener: (context, state) {
           if (state is PaymentSuccess) {
             // Don't auto-navigate, let user choose when to go back
             print('Payment successful: ${state.invoice.invoiceId}');
+            
+            // Hiển thị push notification ngoài app
+            PushNotificationService.showPaymentSuccessNotification(
+              orderId: state.invoice.invoiceId,
+              amount: '\$${state.invoice.totalAmount.toStringAsFixed(2)}',
+            );
+            
+            // Trigger success notification trong app
+            context.read<NotificationBloc>().add(
+              ShowPaymentSuccessNotification(
+                message: 'Payment successful! Order ID: ${state.invoice.invoiceId}',
+              ),
+            );
           } else if (state is PaymentFailure) {
             // Show error for longer time, then auto-navigate back
             Future.delayed(const Duration(seconds: 5), () {
@@ -49,6 +63,18 @@ class _PaymentResultScreenState extends State<PaymentResultScreen> {  @override
                 _navigateToHome();
               }
             });
+            
+            // Hiển thị push notification thất bại ngoài app
+            PushNotificationService.showPaymentFailureNotification(
+              error: state.error,
+            );
+            
+            // Trigger failure notification trong app
+            context.read<NotificationBloc>().add(
+              ShowPaymentFailureNotification(
+                message: 'Payment failed: ${state.error}',
+              ),
+            );
           }
         },
         child: BlocBuilder<PaymentBloc, PaymentState>(
@@ -155,7 +181,10 @@ class _PaymentResultScreenState extends State<PaymentResultScreen> {  @override
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
+                  // Clear notification before navigating home
+                  context.read<NotificationBloc>().add(ClearNotification());
+                  await Future.delayed(const Duration(milliseconds: 300));
                   _navigateToHome();
                 },
                 style: ElevatedButton.styleFrom(
