@@ -9,6 +9,7 @@ import 'package:pizza_app/screens/home/blocs/search_bloc/search_bloc.dart';
 
 import 'cart_screen.dart';
 import 'details_screen.dart';
+import '../../payment/payment_history_screen.dart';
 import 'search_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -28,14 +29,29 @@ class HomeScreen extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.w900, fontSize: 30),
             ),
           ],
-        ),        actions: [          // Search Icon
+        ),
+        actions: [
+          // Lịch sử thanh toán
+          IconButton(
+            tooltip: 'Lịch sử thanh toán',
+            icon: const Icon(Icons.history, color: Colors.green),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const PaymentHistoryScreen(),
+                ),
+              );
+            },
+          ),
+          // Search Icon
           IconButton(
             onPressed: () {
               final getPizzaBloc = context.read<GetPizzaBloc>();
               final cartBloc = context.read<CartBloc>();
               final authBloc = context.read<AuthenticationBloc>();
               final state = getPizzaBloc.state;
-              
+
               if (state is GetPizzaSuccess) {
                 Navigator.push(
                   context,
@@ -63,10 +79,11 @@ class HomeScreen extends StatelessWidget {
               if (cartState is CartLoaded) {
                 itemCount = cartState.totalItems;
               }
-              
+
               return Stack(
                 children: [
-                  IconButton(                    onPressed: () {
+                  IconButton(
+                    onPressed: () {
                       final cartBloc = context.read<CartBloc>();
                       Navigator.push(
                         context,
@@ -104,9 +121,12 @@ class HomeScreen extends StatelessWidget {
                           textAlign: TextAlign.center,
                         ),
                       ),
-                    ),                ],              );
+                    ),
+                ],
+              );
             },
-          ),          IconButton(
+          ),
+          IconButton(
             onPressed: () {
               context.read<SignInBloc>().add(SignOutRequired());
             },
@@ -135,7 +155,8 @@ class HomeScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(20),                      onTap: () {
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: () {
                         final cartBloc = context.read<CartBloc>();
                         Navigator.push(
                           context,
@@ -160,8 +181,8 @@ class HomeScreen extends StatelessWidget {
                                 Container(
                                   decoration: BoxDecoration(
                                     color: state.pizzas[i].isVeg
-                                      ? Colors.green
-                                      : Colors.red,
+                                        ? Colors.green
+                                        : Colors.red,
                                     borderRadius: BorderRadius.circular(30),
                                   ),
                                   child: Padding(
@@ -171,8 +192,8 @@ class HomeScreen extends StatelessWidget {
                                     ),
                                     child: Text(
                                       state.pizzas[i].isVeg
-                                      ? "VEG"
-                                      : "NON-VEG",
+                                          ? "VEG"
+                                          : "NON-VEG",
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
@@ -194,16 +215,16 @@ class HomeScreen extends StatelessWidget {
                                     ),
                                     child: Text(
                                       state.pizzas[i].spicy == 1
-                                      ? "🌶️ BLAND"
-                                      : state.pizzas[i].spicy == 2
-                                      ? "🌶️ BALANCE"
-                                      : "🌶️ SPICY",
+                                          ? "🌶️ BLAND"
+                                          : state.pizzas[i].spicy == 2
+                                          ? "🌶️ BALANCE"
+                                          : "🌶️ SPICY",
                                       style: TextStyle(
                                         color: state.pizzas[i].spicy == 1
-                                                ? Colors.green
-                                                : state.pizzas[i].spicy == 2
-                                                ? Colors.orange
-                                                : Colors.redAccent,
+                                            ? Colors.green
+                                            : state.pizzas[i].spicy == 2
+                                            ? Colors.orange
+                                            : Colors.redAccent,
                                         fontWeight: FontWeight.w800,
                                         fontSize: 10,
                                       ),
@@ -248,7 +269,7 @@ class HomeScreen extends StatelessWidget {
                               padding: const EdgeInsets.all(8.0),
                               child: Row(
                                 mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                MainAxisAlignment.spaceBetween,
                                 children: [
                                   Row(
                                     children: [
@@ -257,9 +278,9 @@ class HomeScreen extends StatelessWidget {
                                         style: TextStyle(
                                           fontSize: 16,
                                           color:
-                                              Theme.of(
-                                                context,
-                                              ).colorScheme.primary,
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
                                           fontWeight: FontWeight.w700,
                                         ),
                                       ),
@@ -271,11 +292,12 @@ class HomeScreen extends StatelessWidget {
                                           color: Colors.grey.shade500,
                                           fontWeight: FontWeight.w700,
                                           decoration:
-                                              TextDecoration.lineThrough,
+                                          TextDecoration.lineThrough,
                                         ),
                                       ),
                                     ],
-                                  ),                                  IconButton(
+                                  ),
+                                  IconButton(
                                     onPressed: () {
                                       final authState = context.read<AuthenticationBloc>().state;
                                       if (authState.status == AuthenticationStatus.authenticated) {
@@ -283,8 +305,8 @@ class HomeScreen extends StatelessWidget {
                                         if (userId != null) {
                                           context.read<CartBloc>().add(
                                             AddToCart(
-                                              pizza: state.pizzas[i], 
-                                              quantity: 1, 
+                                              pizza: state.pizzas[i],
+                                              quantity: 1,
                                               userId: userId
                                             ),
                                           );
@@ -321,7 +343,7 @@ class HomeScreen extends StatelessWidget {
                   );
                 },
               );
-            } else if (state is GetPizzaLoading){
+            } else if (state is GetPizzaLoading) {
               return Center(
                 child: CircularProgressIndicator(),
               );
