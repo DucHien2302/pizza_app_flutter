@@ -4,6 +4,10 @@ import 'package:app_links/app_links.dart';
 import 'package:pizza_app/blocs/authentication_bloc/authentication_bloc.dart';
 import 'package:pizza_app/blocs/cart_bloc/cart_bloc.dart';
 import 'package:pizza_app/blocs/payment_bloc/payment_bloc.dart';
+import 'package:pizza_app/blocs/notification_bloc/notification_bloc.dart';
+import 'package:pizza_app/components/notification_widget.dart';
+import 'package:pizza_app/components/push_notification_service.dart';
+import 'package:pizza_app/components/fcm_token_service.dart';
 import 'package:pizza_app/screens/auth/blocs/sign_in_bloc/sign_in_bloc.dart';
 import 'package:pizza_app/screens/home/blocs/get_pizza_bloc/get_pizza_bloc.dart';
 import 'package:pizza_repository/pizza_repository.dart';
@@ -30,6 +34,13 @@ class _MyAppViewState extends State<MyAppView> {
   void initState() {
     super.initState();
     _initDeepLinks();
+    // Khởi tạo push notification
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await PushNotificationService.initialize(context);
+      // Lấy FCM token để test
+      final token = await FCMTokenService.getToken();
+      print('FCM Token for testing: $token');
+    });
   }
 
   void _initDeepLinks() {
@@ -61,22 +72,22 @@ class _MyAppViewState extends State<MyAppView> {
       });
     }
   }
-
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: _navigatorKey,
-      title: 'Pizza Delivery',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.light(
-          surface: Colors.grey.shade100,
-          onSurface: Colors.black,
-          primary: Colors.blue,
-          onPrimary: Colors.white,
+    return NotificationWidget(
+      child: MaterialApp(
+        navigatorKey: _navigatorKey,
+        title: 'Pizza Delivery',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.light(
+            surface: Colors.grey.shade100,
+            onSurface: Colors.black,
+            primary: Colors.blue,
+            onPrimary: Colors.white,
+          ),
         ),
-      ),
-      initialRoute: '/',      onGenerateRoute: (settings) {
+        initialRoute: '/',        onGenerateRoute: (settings) {
         // Handle named routes
         switch (settings.name) {
           case '/':
@@ -126,8 +137,7 @@ class _MyAppViewState extends State<MyAppView> {
                 },
               ),
             );
-            
-          case '/payment_result':
+              case '/payment_result':
             // Extract query parameters from route settings
             final args = settings.arguments as Map<String, String>?;
             return MaterialPageRoute(
@@ -138,18 +148,21 @@ class _MyAppViewState extends State<MyAppView> {
                       paymentRepository: context.read<PaymentRepository>(),
                     ),
                   ),
+                  BlocProvider.value(
+                    value: context.read<NotificationBloc>(),
+                  ),
                 ],
                 child: PaymentResultScreen(
                   queryParameters: args ?? {},
                 ),
               ),
             );
-            
-          default:
+              default:
             // Return null for unknown routes - this will show a 404 page
             return null;
         }
       },
+    ),
     );
   }
 }

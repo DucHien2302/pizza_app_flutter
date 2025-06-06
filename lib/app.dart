@@ -6,6 +6,7 @@ import 'package:payment_repository/payment_repository.dart';
 import 'app_view.dart';
 import 'blocs/authentication_bloc/authentication_bloc.dart';
 import 'blocs/payment_bloc/payment_bloc.dart';
+import 'blocs/notification_bloc/notification_bloc.dart';
 
 class MyApp extends StatelessWidget {
   final UserRepository userRepository;
@@ -28,11 +29,13 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<AuthenticationBloc>(
           create: (context) => AuthenticationBloc(userRepository: userRepository),
-        ),
-        BlocProvider<PaymentBloc>(
+        ),        BlocProvider<PaymentBloc>(
           create: (context) => PaymentBloc(
             paymentRepository: context.read<PaymentRepository>(),
           ),
+        ),
+        BlocProvider<NotificationBloc>(
+          create: (context) => NotificationBloc(),
         ),
       ],
       child: const MyAppView(),
