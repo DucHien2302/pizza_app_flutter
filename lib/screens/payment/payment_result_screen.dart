@@ -17,22 +17,29 @@ class PaymentResultScreen extends StatefulWidget {
   State<PaymentResultScreen> createState() => _PaymentResultScreenState();
 }
 
-class _PaymentResultScreenState extends State<PaymentResultScreen> {  @override
+class _PaymentResultScreenState extends State<PaymentResultScreen> {
+  @override
   void initState() {
     super.initState();
     print('PaymentResultScreen initialized with query parameters: ${widget.queryParameters}');
-    
-    // Validate VNPAY response when screen loads
+    // Không gọi context.read ở đây nữa!
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Gọi bloc ở đây để tránh lỗi Provider
     context.read<PaymentBloc>().add(
       ValidateVNPayResponse(queryParameters: widget.queryParameters),
     );
-  }  void _navigateToHome() {
-    // Instead of using popUntil, navigate to the root with a clean slate
-    // This ensures we properly return to the authenticated home state
+  }
+
+  void _navigateToHome() {
+    // Chỉ điều hướng về Home, không gọi CartBloc/GetPizzaBloc ở đây nữa!
     Navigator.of(context).pushNamedAndRemoveUntil(
       '/',
       (route) => false,
-      arguments: {'refresh_cart': true}, // Pass flag to refresh cart
+      arguments: {'refresh_cart': true},
     );
   }
 

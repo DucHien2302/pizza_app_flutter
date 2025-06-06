@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pizza_app/blocs/authentication_bloc/authentication_bloc.dart';
 import 'package:pizza_app/blocs/cart_bloc/cart_bloc.dart';
+import 'package:pizza_app/components/star_rating.dart';
 import 'package:pizza_app/screens/auth/blocs/sign_in_bloc/sign_in_bloc.dart';
 import 'package:pizza_app/screens/home/blocs/get_pizza_bloc/get_pizza_bloc.dart';
 import 'package:pizza_app/screens/home/blocs/search_bloc/search_bloc.dart';
+import 'package:pizza_repository/pizza_repository.dart';
 
 import 'cart_screen.dart';
 import 'details_screen.dart';
@@ -14,6 +16,7 @@ import 'search_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -31,7 +34,7 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
         actions: [
-          // Lịch sử thanh toán
+          // Payment History Icon
           IconButton(
             tooltip: 'Lịch sử thanh toán',
             icon: const Icon(Icons.history, color: Colors.green),
@@ -126,6 +129,7 @@ class HomeScreen extends StatelessWidget {
               );
             },
           ),
+          // Sign Out Icon
           IconButton(
             onPressed: () {
               context.read<SignInBloc>().add(SignOutRequired());
@@ -171,166 +175,206 @@ class HomeScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Image.asset(state.pizzas[i].picture),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12.0,
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: state.pizzas[i].isVeg
-                                        ? Colors.green
-                                        : Colors.red,
-                                    borderRadius: BorderRadius.circular(30),
-                                  ),
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: 4,
-                                      horizontal: 8,
-                                    ),
-                                    child: Text(
-                                      state.pizzas[i].isVeg
-                                          ? "VEG"
-                                          : "NON-VEG",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 10,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(30),
-                                  ),
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: 4,
-                                      horizontal: 8,
-                                    ),
-                                    child: Text(
-                                      state.pizzas[i].spicy == 1
-                                          ? "🌶️ BLAND"
-                                          : state.pizzas[i].spicy == 2
-                                          ? "🌶️ BALANCE"
-                                          : "🌶️ SPICY",
-                                      style: TextStyle(
-                                        color: state.pizzas[i].spicy == 1
-                                            ? Colors.green
-                                            : state.pizzas[i].spicy == 2
-                                            ? Colors.orange
-                                            : Colors.redAccent,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 10,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                          // Pizza Image
+                          ClipRRect(
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                            child: Image.asset(
+                              state.pizzas[i].picture,
+                              width: double.infinity,
+                              height: 200,
+                              fit: BoxFit.cover,
                             ),
                           ),
-                          SizedBox(height: 8),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12.0,
-                            ),
-                            child: Text(
-                              state.pizzas[i].name,
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12.0,
-                            ),
-                            child: Text(
-                              state.pizzas[i].description,
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey.shade500,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12.0,
-                            ),
+                          // Card Content
+                          Expanded(
                             child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
+                              padding: const EdgeInsets.symmetric(vertical: 8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        "\$${state.pizzas[i].price - (state.pizzas[i].price * (state.pizzas[i].discount / 100))}",
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color:
-                                          Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                      SizedBox(width: 5),
-                                      Text(
-                                        "\$${state.pizzas[i].price}.00",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade500,
-                                          fontWeight: FontWeight.w700,
-                                          decoration:
-                                          TextDecoration.lineThrough,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  IconButton(
-                                    onPressed: () {
-                                      final authState = context.read<AuthenticationBloc>().state;
-                                      if (authState.status == AuthenticationStatus.authenticated) {
-                                        final userId = authState.user?.userId;
-                                        if (userId != null) {
-                                          context.read<CartBloc>().add(
-                                            AddToCart(
-                                              pizza: state.pizzas[i],
-                                              quantity: 1,
-                                              userId: userId
-                                            ),
-                                          );
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text('Added ${state.pizzas[i].name} to cart!'),
-                                              duration: const Duration(seconds: 2),
-                                              backgroundColor: Colors.green,
-                                            ),
-                                          );
-                                        }
-                                      } else {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Please log in to add items to cart'),
-                                            duration: Duration(seconds: 2),
-                                            backgroundColor: Colors.red,
+                                  // Veg/Non-Veg and Spicy Indicators
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            color: state.pizzas[i].isVeg ? Colors.green : Colors.red,
+                                            borderRadius: BorderRadius.circular(30),
                                           ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 4,
+                                              horizontal: 8,
+                                            ),
+                                            child: Text(
+                                              state.pizzas[i].isVeg ? "VEG" : "NON-VEG",
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 10,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.green.withOpacity(0.2),
+                                            borderRadius: BorderRadius.circular(30),
+                                          ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 4,
+                                              horizontal: 8,
+                                            ),
+                                            child: Text(
+                                              state.pizzas[i].spicy == 1
+                                                  ? "🌶️ BLAND"
+                                                  : state.pizzas[i].spicy == 2
+                                                      ? "🌶️ BALANCE"
+                                                      : "🌶️ SPICY",
+                                              style: TextStyle(
+                                                color: state.pizzas[i].spicy == 1
+                                                    ? Colors.green
+                                                    : state.pizzas[i].spicy == 2
+                                                        ? Colors.orange
+                                                        : Colors.redAccent,
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 10,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  // Pizza Name
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                    child: Text(
+                                      state.pizzas[i].name,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  // Pizza Description
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                    child: Text(
+                                      state.pizzas[i].description,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.grey.shade500,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  // Rating Display
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                    child: StreamBuilder<List<Review>>(
+                                      stream: RepositoryProvider.of<PizzaRepo>(context)
+                                          .getReviewsStreamForPizza(state.pizzas[i].pizzaId),
+                                      builder: (context, snapshot) {
+                                        final reviews = snapshot.data ?? [];
+                                        final averageRating = reviews.isEmpty
+                                            ? 0.0
+                                            : reviews.map((r) => r.rating).reduce((a, b) => a + b) /
+                                                (reviews.isEmpty ? 1 : reviews.length);
+                                        return Row(
+                                          children: [
+                                            StarRating(
+                                              rating: averageRating,
+                                              size: 14,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '(${reviews.length})',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey.shade600,
+                                              ),
+                                            ),
+                                          ],
                                         );
-                                      }
-                                    },
-                                    icon: Icon(
-                                      CupertinoIcons.add_circled_solid,
-                                      color: Theme.of(context).colorScheme.primary,
+                                      },
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  // Price and Add to Cart
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Text(
+                                              "\$${(state.pizzas[i].price - (state.pizzas[i].price * (state.pizzas[i].discount / 100))).toStringAsFixed(1)}",
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                color: Theme.of(context).colorScheme.primary,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 5),
+                                            Text(
+                                              "\$${state.pizzas[i].price.toStringAsFixed(2)}",
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey.shade500,
+                                                fontWeight: FontWeight.w700,
+                                                decoration: TextDecoration.lineThrough,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        IconButton(
+                                          onPressed: () {
+                                            final authState = context.read<AuthenticationBloc>().state;
+                                            if (authState.status == AuthenticationStatus.authenticated) {
+                                              final userId = authState.user?.userId;
+                                              if (userId != null) {
+                                                context.read<CartBloc>().add(
+                                                      AddToCart(
+                                                        pizza: state.pizzas[i],
+                                                        quantity: 1,
+                                                        userId: userId,
+                                                      ),
+                                                    );
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text('Added ${state.pizzas[i].name} to cart!'),
+                                                    duration: const Duration(seconds: 2),
+                                                    backgroundColor: Colors.green,
+                                                  ),
+                                                );
+                                              }
+                                            } else {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text('Please log in to add items to cart'),
+                                                  duration: Duration(seconds: 2),
+                                                  backgroundColor: Colors.red,
+                                                ),
+                                              );
+                                            }
+                                          },
+                                          icon: Icon(
+                                            CupertinoIcons.add_circled_solid,
+                                            color: Theme.of(context).colorScheme.primary,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
@@ -344,14 +388,12 @@ class HomeScreen extends StatelessWidget {
                 },
               );
             } else if (state is GetPizzaLoading) {
-              return Center(
+              return const Center(
                 child: CircularProgressIndicator(),
               );
             } else {
-              return Center(
-                child: Text(
-                  'An error has occured...'
-                ),
+              return const Center(
+                child: Text('An error has occurred...'),
               );
             }
           },

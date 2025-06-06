@@ -3,7 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:pizza_app/blocs/authentication_bloc/authentication_bloc.dart';
 import 'package:pizza_app/blocs/cart_bloc/cart_bloc.dart';
+import 'package:pizza_app/blocs/review_bloc/review_bloc.dart';
 import 'package:pizza_app/components/micro.dart';
+import 'package:pizza_app/components/star_rating.dart';
+import 'package:pizza_app/screens/reviews/reviews_screen.dart';
 import 'package:pizza_repository/pizza_repository.dart';
 
 class DetailsScreen extends StatefulWidget {
@@ -138,7 +141,73 @@ class _DetailsScreenState extends State<DetailsScreen> {
                           icon: FontAwesomeIcons.breadSlice,
                         ),
                       ],
-                    ),                    SizedBox(height: 40),
+                    ),                    SizedBox(height: 12),
+                    // Rating and Reviews section
+                    BlocProvider(
+                      create: (context) => ReviewBloc(
+                        RepositoryProvider.of<PizzaRepo>(context),
+                      )..add(GetReviewsEvent(widget.pizza.pizzaId)),
+                      child: BlocBuilder<ReviewBloc, ReviewState>(
+                        builder: (context, reviewState) {
+                          if (reviewState is ReviewLoaded) {
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ReviewsScreen(pizza: widget.pizza),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[50],
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.grey[300]!),
+                                ),
+                                child: Row(
+                                  children: [
+                                    StarRating(
+                                      rating: reviewState.averageRating,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '${reviewState.averageRating.toStringAsFixed(1)} (${reviewState.reviewCount} đánh giá)',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[700],
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Icon(
+                                      Icons.arrow_forward_ios,
+                                      size: 14,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          } else if (reviewState is ReviewError) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                              child: Text(
+                                'Chưa có đánh giá - Nhấn để thêm đánh giá đầu tiên',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                    ),
+                    SizedBox(height: 40),
                     // Quantity selector
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,

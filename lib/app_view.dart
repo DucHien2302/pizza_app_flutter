@@ -105,10 +105,9 @@ class _MyAppViewState extends State<MyAppView> {
                           create: (context) => SignInBloc(
                             context.read<UserRepository>(),
                           ),
-                        ),
-                        BlocProvider(
+                        ),                        BlocProvider(
                           create: (context) => GetPizzaBloc(
-                            FirebasePizzaRepo()
+                            context.read<PizzaRepo>()
                           )..add(GetPizza())
                         ),
                         BlocProvider(
@@ -141,20 +140,34 @@ class _MyAppViewState extends State<MyAppView> {
             // Extract query parameters from route settings
             final args = settings.arguments as Map<String, String>?;
             return MaterialPageRoute(
-              builder: (context) => MultiBlocProvider(
-                providers: [
-                  BlocProvider(
-                    create: (context) => PaymentBloc(
-                      paymentRepository: context.read<PaymentRepository>(),
+              builder: (context) => BlocBuilder<AuthenticationBloc, AuthenticationState>(
+                builder: (context, state) {
+                  return MultiBlocProvider(
+                    providers: [
+                      BlocProvider(
+                        create: (context) => PaymentBloc(
+                          paymentRepository: context.read<PaymentRepository>(),
+                        ),
+                      ),
+                      BlocProvider.value(
+                        value: context.read<NotificationBloc>(),
+                      ),
+                      BlocProvider(
+                        create: (context) => CartBloc(
+                          cartRepository: context.read<CartRepository>(),
+                        ),
+                      ),
+                      BlocProvider(
+                        create: (context) => GetPizzaBloc(
+                          context.read<PizzaRepo>(),
+                        ),
+                      ),
+                    ],
+                    child: PaymentResultScreen(
+                      queryParameters: args ?? {},
                     ),
-                  ),
-                  BlocProvider.value(
-                    value: context.read<NotificationBloc>(),
-                  ),
-                ],
-                child: PaymentResultScreen(
-                  queryParameters: args ?? {},
-                ),
+                  );
+                },
               ),
             );
               default:
